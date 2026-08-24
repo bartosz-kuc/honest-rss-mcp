@@ -16,7 +16,6 @@ import json
 from typing import Any
 
 import feedparser
-
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
@@ -153,7 +152,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
                 info = _feed_info(f, url, None)
                 info["total_entries"] = len(f.entries)
                 feeds.append(info)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 feeds.append({"url": url, "error": f"{type(exc).__name__}: {exc}"})
         return [TextContent(type="text", text=json.dumps({"feeds": feeds}, ensure_ascii=False, indent=2))]
 
