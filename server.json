@@ -3,7 +3,7 @@
   "name": "rss-mcp",
   "description": "Local MCP server for RSS/Atom feeds — fetch and parse without cloud middle.",
   "repository": {
-    "url": "https://github.com/bartosz-kuc/rss-mcp",
+    "url": "https://github.com/bartosz-kuc/honest-rss-mcp",
     "source": "github"
   },
   "version": "0.1.0",

@@ -25,7 +25,7 @@ Handles RSS 1.0, RSS 2.0, and Atom — whatever `feedparser` handles.
 ## Setup
 
 ```bash
-git clone https://github.com/bartosz-kuc/rss-mcp.git
+git clone https://github.com/bartosz-kuc/honest-rss-mcp.git
 cd rss-mcp
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt

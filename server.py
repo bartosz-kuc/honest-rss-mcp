@@ -7,7 +7,7 @@ machine except the HTTPS GET to the feed URL.
 Tools: fetch_feed, search_entries, list_feed_metadata.
 
 Author: Bartosz Kuć <firma@bartosza.pl>
-Repo:   https://github.com/bartosz-kuc/rss-mcp
+Repo:   https://github.com/bartosz-kuc/honest-rss-mcp
 License: MIT
 """
 
@@ -21,7 +21,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
 
-USER_AGENT = "rss-mcp/1.0 (+https://github.com/bartosz-kuc/rss-mcp)"
+USER_AGENT = "rss-mcp/1.0 (+https://github.com/bartosz-kuc/honest-rss-mcp)"
 
 
 def _entry_to_dict(e: Any) -> dict:
