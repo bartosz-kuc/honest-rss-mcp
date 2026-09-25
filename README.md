@@ -1,4 +1,4 @@
-# rss-mcp
+# honest-rss-mcp
 
 Local MCP server for RSS and Atom feeds. Universal, no cloud middle.
 
@@ -12,11 +12,11 @@ Every AI assistant should be able to read a feed. RSS is the last honest content
 
 Three tools:
 
-- `fetch_feed` — full feed + N most recent entries
+- `fetch_feed` — feed metadata + the first N entries in feed order (not re-sorted; most feeds list newest first, but that isn't guaranteed)
 - `search_entries` — feed entries filtered by keyword in title/summary
-- `list_feed_metadata` — quick dashboard view over many feeds at once (no full entry payload)
+- `list_feed_metadata` — quick dashboard view over up to 20 feeds at once (no full entry payload)
 
-Handles RSS 1.0, RSS 2.0, and Atom — whatever `feedparser` handles.
+Handles RSS 1.0, RSS 2.0, and Atom — whatever `feedparser` handles. Network fetches use a 15-second socket timeout (for connecting and for each read), so a feed server that stops responding returns an error instead of hanging the tool.
 
 ## Requirements
 
@@ -26,10 +26,12 @@ Handles RSS 1.0, RSS 2.0, and Atom — whatever `feedparser` handles.
 
 ```bash
 git clone https://github.com/bartosz-kuc/honest-rss-mcp.git
-cd rss-mcp
+cd honest-rss-mcp
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt
 ```
+
+On Windows use `python` instead of `python3`, and `venv\Scripts\pip` / `venv\Scripts\python` instead of the `venv/bin/...` paths shown here and in the configs below.
 
 Register with Claude Code:
 

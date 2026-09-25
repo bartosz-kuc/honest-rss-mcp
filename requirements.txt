@@ -1,2 +1,2 @@
 mcp>=2.0.0,<3.0.0
-feedparser>=6.0.12
+feedparser>=6.0.12,<7

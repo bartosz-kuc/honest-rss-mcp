@@ -13,6 +13,8 @@ License: MIT
 
 import asyncio
 import json
+import urllib.error
+import urllib.request
 from typing import Any
 
 import feedparser
@@ -22,6 +24,18 @@ from mcp.server.stdio import stdio_server
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
 
 USER_AGENT = "rss-mcp/1.0 (+https://github.com/bartosz-kuc/honest-rss-mcp)"
+FETCH_TIMEOUT = 15  # seconds; socket timeout for connecting and for each read
+MAX_URLS = 20  # cap for list_feed_metadata
+
+
+class _TimeoutHandler(urllib.request.BaseHandler):
+    """Sets a socket timeout on every request feedparser makes (feedparser 6 has no timeout option)."""
+
+    def _set_timeout(self, req: urllib.request.Request) -> urllib.request.Request:
+        req.timeout = FETCH_TIMEOUT
+        return req
+
+    http_request = https_request = ftp_request = _set_timeout
 
 
 def _entry_to_dict(e: Any) -> dict:
@@ -56,7 +70,16 @@ def _feed_info(f: feedparser.FeedParserDict, url: str, entry_count: int | None) 
 
 
 def _parse(url: str) -> feedparser.FeedParserDict:
-    return feedparser.parse(url, agent=USER_AGENT)
+    timeout_msg = f"timed out after {FETCH_TIMEOUT}s fetching {url}"
+    try:
+        f = feedparser.parse(url, agent=USER_AGENT, handlers=[_TimeoutHandler()])
+    except TimeoutError as exc:  # stalled while reading the response body
+        raise TimeoutError(timeout_msg) from exc
+    exc = f.get("bozo_exception")
+    if isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, TimeoutError):
+        # stalled while connecting or waiting for headers (feedparser reports URLError as bozo)
+        raise TimeoutError(timeout_msg) from exc
+    return f
 
 
 server = Server("rss")
@@ -67,15 +90,17 @@ async def _list_tools() -> list[Tool]:
         Tool(
             name="fetch_feed",
             description=(
-                "Fetch and parse an RSS or Atom feed. Returns feed metadata (title, subtitle, language) and a list "
-                "of entries (title, link, published date, author, summary, tags). Use `limit` to cap how many "
-                "entries you get back — feeds can be huge. Works with any publicly-accessible feed URL."
+                "Fetch and parse an RSS or Atom feed. Returns feed metadata (title, subtitle, language) and the "
+                "first `limit` entries in the order the feed lists them (title, link, published date, author, "
+                "summary, tags). Entries are not re-sorted: most feeds list newest first, but that is not "
+                "guaranteed. Use `limit` to cap how many entries you get back — feeds can be huge. Works with any "
+                "publicly-accessible feed URL."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "url": {"type": "string", "description": "Feed URL (RSS 1.0, RSS 2.0, or Atom)"},
-                    "limit": {"type": "integer", "default": 20, "description": "Maximum number of entries to return (default 20)"},
+                    "limit": {"type": "integer", "default": 20, "description": "Maximum number of entries to return, taken from the start of the feed (default 20)"},
                 },
                 "required": ["url"],
             },
@@ -99,13 +124,18 @@ async def _list_tools() -> list[Tool]:
         Tool(
             name="list_feed_metadata",
             description=(
-                "Fetch metadata for one or more feeds without loading all entries — title, subtitle, entry count, "
-                "last update time. Useful for building a dashboard of feeds you follow."
+                f"Fetch metadata for one or more feeds (up to {MAX_URLS}) without returning their entries — title, "
+                "subtitle, entry count, last update time. Useful for building a dashboard of feeds you follow."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "urls": {"type": "array", "items": {"type": "string"}, "description": "List of feed URLs"},
+                    "urls": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "maxItems": MAX_URLS,
+                        "description": f"List of feed URLs (max {MAX_URLS})",
+                    },
                 },
                 "required": ["urls"],
             },
@@ -144,6 +174,8 @@ async def _call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         urls = arguments["urls"]
         if not isinstance(urls, list) or not urls:
             raise ValueError("urls must be a non-empty list")
+        if len(urls) > MAX_URLS:
+            raise ValueError(f"too many urls ({len(urls)}); list_feed_metadata accepts at most {MAX_URLS} per call")
         feeds = []
         for url in urls:
             try:

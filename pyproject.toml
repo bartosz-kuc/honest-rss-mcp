@@ -24,8 +24,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=2.0.0,<3.0.0",
-    "feedparser>=6.0.0",
-    "requests>=2.34.2",
+    "feedparser>=6.0.12,<7",
 ]
 
 [project.urls]
