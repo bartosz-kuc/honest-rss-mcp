@@ -58,13 +58,15 @@ Claude Desktop `claude_desktop_config.json`:
 
 `fetch_feed(url="https://news.ycombinator.com/rss", limit=10)`
 
-> "Anything about MCP in the Anthropic blog feed?"
+> "Anything about Copilot on the GitHub blog?"
 
-`search_entries(url="https://www.anthropic.com/rss.xml", query="MCP")`
+`search_entries(url="https://github.blog/feed/", query="Copilot")`
 
 > "Give me a summary line for each of these five feeds."
 
 `list_feed_metadata(urls=["...", "...", ...])`
+
+Only `http://` and `https://` feed URLs are accepted — local file paths and `file://` URLs are rejected, so the server never reads files from your disk.
 
 ## Data flow
 

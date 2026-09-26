@@ -14,6 +14,7 @@ License: MIT
 import asyncio
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import Any
 
@@ -69,7 +70,17 @@ def _feed_info(f: feedparser.FeedParserDict, url: str, entry_count: int | None) 
     return info
 
 
+def _check_url(url: str) -> None:
+    # feedparser.parse() also accepts local file paths, file:// URLs and raw XML strings.
+    # Only remote http(s) feeds are allowed, so a tool call (or text injected via feed
+    # content) cannot make the server read local files.
+    parts = urllib.parse.urlsplit(url.strip())
+    if parts.scheme.lower() not in ("http", "https") or not parts.netloc:
+        raise ValueError(f"only http(s) feed URLs are allowed, got: {url[:100]!r}")
+
+
 def _parse(url: str) -> feedparser.FeedParserDict:
+    _check_url(url)
     timeout_msg = f"timed out after {FETCH_TIMEOUT}s fetching {url}"
     try:
         f = feedparser.parse(url, agent=USER_AGENT, handlers=[_TimeoutHandler()])
